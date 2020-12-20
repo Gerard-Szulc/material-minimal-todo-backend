@@ -12,3 +12,8 @@ func TodoRoute(route fiber.Router) {
 	route.Delete("/:id", controllers.DeleteTodo)
 	route.Get("/:id", controllers.GetTodo)
 }
+
+func UserRoutes(route fiber.Router) {
+	route.Post("/register", controllers.Register)
+	route.Post("/login", controllers.Login)
+}

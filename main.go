@@ -5,24 +5,51 @@ import (
 	"github.com/Gerard-Szulc/material-minimal-todo/database"
 	"github.com/Gerard-Szulc/material-minimal-todo/migrations"
 	"github.com/Gerard-Szulc/material-minimal-todo/routes"
+	"github.com/Gerard-Szulc/material-minimal-todo/utils"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/limiter"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"os"
 )
 
-func start () {
+func start() {
 	database.InitDatabase()
 	startApi()
 }
 
+func validateRequest(c *fiber.Ctx) error {
+	println(string(c.OriginalURL()))
+	url := string(c.OriginalURL())
+
+	if url == "/auth/login" {
+		return c.Next()
+	}
+	if url == "/auth/register" {
+		return c.Next()
+	}
+
+	if utils.ValidateRequestToken(c) {
+		return c.Next()
+	}
+
+	return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+		"success": false,
+		"message": "Not allowed",
+	})
+
+}
+
 func setupRoutes(app *fiber.App) {
 
-	api := app.Group("/api")
-	routes.TodoRoute(api.Group("/todos"))
+	auth := app.Group("/auth", validateRequest)
+	api := app.Group("/api", validateRequest)
+	todosRoutes := api.Group("/todos")
+	routes.TodoRoute(todosRoutes)
+	routes.UserRoutes(auth)
 
 	app.Get("/", func(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusOK).JSON(fiber.Map{
-			"success":  true,
+			"success": true,
 			"message": "You are at the endpoint 😉",
 		})
 	})
@@ -34,9 +61,10 @@ func setupRoutes(app *fiber.App) {
 		})
 	})
 }
-func startApi () {
+func startApi() {
 	app := fiber.New()
 	app.Use(logger.New())
+	app.Use(limiter.New())
 
 	setupRoutes(app)
 
@@ -46,13 +74,12 @@ func startApi () {
 	}
 	fmt.Println("App is working on port :" + string(port))
 
-	err := app.Listen(":"+string(port))
+	err := app.Listen(":" + string(port))
 
 	if err != nil {
 		panic(err)
 	}
 }
-
 
 func main() {
 	argsWithProg := os.Args
@@ -63,7 +90,7 @@ func main() {
 		case "migrate":
 			{
 				database.InitDatabase()
-				migrations.CreateDb()
+				migrations.Migrate()
 				println("migration successful")
 
 				return

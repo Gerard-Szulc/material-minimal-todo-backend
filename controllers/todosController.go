@@ -8,19 +8,6 @@ import (
 	"strconv"
 )
 
-//var todos = []*models.Todo{
-//	{
-//		Id:        1,
-//		Title:     "Walk the dog 🦮",
-//		Completed: false,
-//	},
-//	{
-//		Id:        2,
-//		Title:     "Walk the cat 🐈",
-//		Completed: false,
-//	},
-//}
-
 func GetTodos(c *fiber.Ctx) error {
 
 	todos := &[]models.Todo{}
@@ -44,11 +31,10 @@ func CreateTodo(c *fiber.Ctx) error {
 
 	err := c.BodyParser(&body)
 
-	// if error
 	if err != nil {
 		fmt.Println(err)
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"success":  false,
+			"success": false,
 			"message": "Cannot parse JSON",
 		})
 	}
@@ -72,42 +58,37 @@ func CreateTodo(c *fiber.Ctx) error {
 func GetTodo(c *fiber.Ctx) error {
 	todo := &models.Todo{}
 
-	// get parameter value
 	paramId := c.Params("id")
 
 	id, err := strconv.Atoi(paramId)
 
-	// if error in parsing string to int
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"success":  false,
+			"success": false,
 			"message": "Cannot parse Id",
 		})
 	}
 
 	if database.DB.Where("id = ? ", id).First(&todo).RecordNotFound() {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-			"success":  false,
+			"success": false,
 			"message": "Todo not found",
 		})
 	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-				"success": true,
-				"data": map[string]*models.Todo{
-					"todo": todo,
-				},
-			})
+		"success": true,
+		"data": map[string]*models.Todo{
+			"todo": todo,
+		},
+	})
 }
 
 func UpdateTodo(c *fiber.Ctx) error {
-	// find parameter
 	paramId := c.Params("id")
 
-	// convert parameter string to int
 	id, err := strconv.Atoi(paramId)
 
-	// if parameter cannot parse
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"success": false,
@@ -115,7 +96,6 @@ func UpdateTodo(c *fiber.Ctx) error {
 		})
 	}
 
-	// request structure
 	type Request struct {
 		Title     *string `json:"title"`
 		Completed *bool   `json:"completed"`
@@ -134,7 +114,7 @@ func UpdateTodo(c *fiber.Ctx) error {
 	todo := &models.Todo{}
 	if database.DB.Where("id = ? ", id).First(&todo).RecordNotFound() {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-			"success":  false,
+			"success": false,
 			"message": "Todo not found",
 		})
 	}
@@ -157,13 +137,10 @@ func UpdateTodo(c *fiber.Ctx) error {
 }
 
 func DeleteTodo(c *fiber.Ctx) error {
-	// get param
 	paramId := c.Params("id")
 
-	// convert param string to int
 	id, err := strconv.Atoi(paramId)
 
-	// if parameter cannot parse
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"success": false,
@@ -178,4 +155,3 @@ func DeleteTodo(c *fiber.Ctx) error {
 		"message": "Todo not found",
 	})
 }
-
